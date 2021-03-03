@@ -202,8 +202,9 @@ class CSVDataset(Dataset):
     def __getitem__(self, idx):
 
         img = self.load_image(idx)
+        img_name = self.load_image_name(idx)
         annot = self.load_annotations(idx)
-        sample = {'img': img, 'annot': annot}
+        sample = {'img': img, 'annot': annot,'image_path':img_name}
         if self.transform:
             sample = self.transform(sample)
 
@@ -216,6 +217,9 @@ class CSVDataset(Dataset):
             img = skimage.color.gray2rgb(img)
 
         return img.astype(np.float32)/255.0
+    
+    def load_image_name(self,image_index):
+        return self.image_names[image_index]
 
     def load_annotations(self, image_index):
         # get ground truth annotations

@@ -5,6 +5,91 @@ import json
 import os
 import matplotlib.pyplot as plt
 import torch
+import cv2
+import pandas as pd
+from google.colab import data_table
+
+from dataloader import CSVDataset
+
+def get_annots_from_txt(label_file_path):
+    file_handler = open(label_file_path,'w')
+    lines = file_handler.readlines()
+    for i in lines:
+        i = i.replace('\n','')
+        i = i.split()
+        i = list(map(lambda x:float(x),i))
+    
+    df = pd.DataFrame(lines)
+    scores = np.array(df[5],dtype = np.float32)
+    labels = np.array(df[0],dtype = np.int64)
+    x1 = list(df[1])
+    y1 =  list(df[2])
+    x2 =  list(df[3])
+    y2 = list(df[4])
+    boxes=[]
+    for j in len(labels):
+        boxes.append([x1[j],y1[j],x2[j],y2[j]])
+    
+    boxes = np.array(boxes,dtype = np.float32)
+    
+    return scores, labels, boxes
+
+def _get_detections_from_txt(dataset, labels_dir, score_threshold=0.05, max_detections=100, save_path=None):
+    
+    #dataset_train = CSVDataset(train_file=parser.csv_train, class_list=parser.csv_classes,
+    #                           transform=transforms.Compose([Normalizer(), Resizer()]))
+    return 0
+    
+    labels_list = os.listdir(labels_dir)
+
+
+    all_detections = [[None for i in range(dataset.num_classes())] for j in range(len(dataset))]
+
+    for index in range(len(dataset)):
+            data = dataset[index]
+            scale = data['scale']
+            txt_path =os.path.join(labels_dir, data['image_path'].split('/')[-1][:-4]+'.txt') 
+            scores,labels,boxes = get_annots_from_txt(txt_path)
+            # run network
+            # if torch.cuda.is_available():
+            #     scores, labels, boxes = retinanet(data['img'].permute(2, 0, 1).cuda().float().unsqueeze(dim=0))
+            # else:
+            #     scores, labels, boxes = retinanet(data['img'].permute(2, 0, 1).float().unsqueeze(dim=0))
+            # scores = scores.cpu().numpy()
+            # labels = labels.cpu().numpy()
+            # boxes  = boxes.cpu().numpy()
+            
+            # correct boxes for image scale
+            boxes /= scale
+
+            # select indices which have a score above the threshold
+            indices = np.where(scores > score_threshold)[0]
+            if indices.shape[0] > 0:
+                # select those scores
+                scores = scores[indices]
+
+                # find the order with which to sort the scores
+                scores_sort = np.argsort(-scores)[:max_detections]
+
+                # select detections
+                image_boxes      = boxes[indices[scores_sort], :]
+                image_scores     = scores[scores_sort]
+                image_labels     = labels[indices[scores_sort]]
+                image_detections = np.concatenate([image_boxes, np.expand_dims(image_scores, axis=1), np.expand_dims(image_labels, axis=1)], axis=1)
+
+                # copy detections to all_detections
+                for label in range(dataset.num_classes()):
+                    all_detections[index][label] = image_detections[image_detections[:, -1] == label, :-1]
+            else:
+                # copy detections to all_detections
+                for label in range(dataset.num_classes()):
+                    all_detections[index][label] = np.zeros((0, 5))
+
+            print('{}/{}'.format(index + 1, len(dataset)), end='\r')
+
+    return all_detections
+
+    
 
 
 
@@ -155,7 +240,9 @@ def evaluate(
     iou_threshold=0.5,
     score_threshold=0.05,
     max_detections=100,
-    save_path=None
+    save_path=None,
+    labels_dir=None, #provide if mode='yolo'
+    mode = 'retina'
 ):
     """ Evaluate a given dataset using a given retinanet.
     # Arguments
@@ -172,8 +259,10 @@ def evaluate(
 
 
     # gather all detections and annotations
-
-    all_detections     = _get_detections(generator, retinanet, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
+    if mode=='retina':
+        all_detections     = _get_detections(generator, retinanet, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
+    else:
+        all_detections = _get_detections_from_txt(generator, labels_dir, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
     all_annotations    = _get_annotations(generator)
 
     average_precisions = {}
