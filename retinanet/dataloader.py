@@ -307,6 +307,7 @@ def collater(data):
     imgs = [s['img'] for s in data]
     annots = [s['annot'] for s in data]
     scales = [s['scale'] for s in data]
+    img_paths = [s['image_path'] for s in data]
         
     widths = [int(s.shape[0]) for s in imgs]
     heights = [int(s.shape[1]) for s in imgs]
@@ -338,13 +339,13 @@ def collater(data):
 
     padded_imgs = padded_imgs.permute(0, 3, 1, 2)
 
-    return {'img': padded_imgs, 'annot': annot_padded, 'scale': scales}
+    return {'img': padded_imgs, 'annot': annot_padded, 'scale': scales,'image_path':img_paths}
 
 class Resizer(object):
     """Convert ndarrays in sample to Tensors."""
 
     def __call__(self, sample, min_side=608, max_side=1024):
-        image, annots = sample['img'], sample['annot']
+        image, annots, img_path = sample['img'], sample['annot'],sample['image_path']
 
         rows, cols, cns = image.shape
 
@@ -372,7 +373,7 @@ class Resizer(object):
 
         annots[:, :4] *= scale
 
-        return {'img': torch.from_numpy(new_image), 'annot': torch.from_numpy(annots), 'scale': scale}
+        return {'img': torch.from_numpy(new_image), 'annot': torch.from_numpy(annots), 'scale': scale, 'image_path':img_path}
 
 
 class Augmenter(object):
@@ -407,9 +408,10 @@ class Normalizer(object):
 
     def __call__(self, sample):
 
-        image, annots = sample['img'], sample['annot']
+        image, annots, img_path = sample['img'], sample['annot'],sample['image_path']
 
-        return {'img':((image.astype(np.float32)-self.mean)/self.std), 'annot': annots}
+
+        return {'img':((image.astype(np.float32)-self.mean)/self.std), 'annot': annots,'image_path':img_path }
 
 class UnNormalizer(object):
     def __init__(self, mean=None, std=None):

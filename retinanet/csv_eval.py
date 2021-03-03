@@ -9,17 +9,20 @@ import cv2
 import pandas as pd
 from google.colab import data_table
 
-from dataloader import CSVDataset
 
 def get_annots_from_txt(label_file_path):
-    file_handler = open(label_file_path,'w')
+    file_handler = open(label_file_path,'r')
+    print(label_file_path)
     lines = file_handler.readlines()
     for i in lines:
         i = i.replace('\n','')
         i = i.split()
         i = list(map(lambda x:float(x),i))
+    file_handler.close()
     
     df = pd.DataFrame(lines)
+    if df.empty():
+        
     scores = np.array(df[5],dtype = np.float32)
     labels = np.array(df[0],dtype = np.int64)
     x1 = list(df[1])
@@ -27,7 +30,7 @@ def get_annots_from_txt(label_file_path):
     x2 =  list(df[3])
     y2 = list(df[4])
     boxes=[]
-    for j in len(labels):
+    for j in range(len(labels)):
         boxes.append([x1[j],y1[j],x2[j],y2[j]])
     
     boxes = np.array(boxes,dtype = np.float32)
@@ -38,7 +41,7 @@ def _get_detections_from_txt(dataset, labels_dir, score_threshold=0.05, max_dete
     
     #dataset_train = CSVDataset(train_file=parser.csv_train, class_list=parser.csv_classes,
     #                           transform=transforms.Compose([Normalizer(), Resizer()]))
-    return 0
+    #return 0
     
     labels_list = os.listdir(labels_dir)
 
@@ -236,7 +239,7 @@ def _get_annotations(generator):
 
 def evaluate(
     generator,
-    retinanet,
+    retinanet=None,
     iou_threshold=0.5,
     score_threshold=0.05,
     max_detections=100,
@@ -272,7 +275,7 @@ def evaluate(
         true_positives  = np.zeros((0,))
         scores          = np.zeros((0,))
         num_annotations = 0.0
-
+        print(all_detections)
         for i in range(len(generator)):
             detections           = all_detections[i][label]
             annotations          = all_annotations[i][label]
