@@ -71,7 +71,7 @@ def main(args=None):
     dataloader_train = DataLoader(dataset_train, num_workers=3, collate_fn=collater, batch_sampler=sampler)
 
     if dataset_val is not None:
-        sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=130, drop_last=False)
+        sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=1, drop_last=False)
         dataloader_val = DataLoader(dataset_val, num_workers=3, collate_fn=collater, batch_sampler=sampler_val)
 
     # Create the model
@@ -149,8 +149,8 @@ def main(args=None):
                 epoch_loss.append(float(loss))
 
                 print(
-                    'Train: \n Epoch: {} | Iteration: {} | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f} \n \n'.format(
-                        epoch_num, iter_num, float(classification_loss), float(regression_loss), np.mean(loss_hist)))
+                    'Train: Epoch: {} | Iteration: {} | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f} | Epoch loss: {:1.5f} '.format(
+                        epoch_num, iter_num, float(classification_loss), float(regression_loss), np.mean(loss_hist),epoch_loss[-1]))
 
                 del classification_loss
                 del regression_loss
@@ -158,37 +158,38 @@ def main(args=None):
                 print(e)
                 continue
         
-        retinanet.eval()
+        
         for iter_num, data in enumerate(dataloader_val):
             try:
                 #optimizer.zero_grad()
-                
-                if torch.cuda.is_available():
-                    classification_loss, regression_loss = retinanet([data['img'].cuda().float(), data['annot']])
-                else:
-                    classification_loss, regression_loss = retinanet([data['img'].float(), data['annot']])
-                    
-                classification_loss = classification_loss.mean()
-                regression_loss = regression_loss.mean()
+                #retinanet.eval()
+                with torch.no_grad():
+                    if torch.cuda.is_available():
+                        classification_loss, regression_loss = retinanet((data['img'].cuda().float(), data['annot']))
+                    else:
+                        classification_loss, regression_loss = retinanet((data['img'].float(), data['annot']))
+                        
+                    classification_loss = classification_loss.mean()
+                    regression_loss = regression_loss.mean()
 
-                loss = classification_loss + regression_loss
+                    loss = classification_loss + regression_loss
 
-                if bool(loss == 0):
-                    continue
+                    if bool(loss == 0):
+                        continue
 
-                #loss.backward()
+                    #loss.backward()
 
-                #torch.nn.utils.clip_grad_norm_(retinanet.parameters(), 0.1)
+                    #torch.nn.utils.clip_grad_norm_(retinanet.parameters(), 0.1)
 
-                #optimizer.step()
+                    #optimizer.step()
 
-                val_loss_hist.append(float(loss))
+                    val_loss_hist.append(float(loss))
 
-                val_epoch_loss.append(float(loss))
+                    val_epoch_loss.append(float(loss))
 
                 print(
-                    'Val: \n Epoch: {} |  Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}  \n \n'.format(
-                        epoch_num,  float(classification_loss), float(regression_loss), np.mean(loss_hist)))
+                    'Val: Epoch: {} |  Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f} | Epoch loss: {:1.5f} '.format(
+                        epoch_num,  float(classification_loss), float(regression_loss), np.mean(val_loss_hist),val_epoch_loss[-1]))
 
                 del classification_loss
                 del regression_loss
