@@ -1,4 +1,3 @@
-#Same as version 5
 import argparse
 import collections
 
@@ -208,9 +207,9 @@ def main(args=None):
         elif parser.dataset == 'csv' and parser.csv_val is not None:
 
             print('Evaluating dataset')
-            mAP_train = csv_eval.evaluate(val_dataset_train,retinanet,iou_threshold=float(parser.iou)/10)
+            #mAP_train = csv_eval.evaluate(val_dataset_train,retinanet,iou_threshold=float(parser.iou)/10)
             mAP_val = csv_eval.evaluate(dataset_val, retinanet,iou_threshold=float(parser.iou)/10)
-            writer.add_scalar('train_mAP_Questions',mAP_train[0][0],epoch_num)
+            #writer.add_scalar('train_mAP_Questions',mAP_train[0][0],epoch_num)
             writer.add_scalar('val_mAP_Questions', mAP_val[0][0], epoch_num)
             writer.add_scalar('val_loss',np.mean(val_epoch_loss),epoch_num)
             writer.add_scalar('train_loss',np.mean(epoch_loss),epoch_num)
