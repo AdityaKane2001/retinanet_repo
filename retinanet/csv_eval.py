@@ -23,9 +23,9 @@ def get_annots_from_txt(label_file_path):
         num_list = line.split(' ')
         read_lines.append(list(map(lambda x:float(x),num_list)))
     file_handler.close()
-    print(read_lines)
+    
     df = pd.DataFrame(read_lines)
-    print(df)
+    
     if df.empty:
         return np.array([],dtype = np.float32),np.array([],dtype = np.float32),np.array([],dtype = np.float32)
     scores = np.array(df[5],dtype = np.float32)
@@ -282,7 +282,7 @@ def evaluate(
         true_positives  = np.zeros((0,))
         scores          = np.zeros((0,))
         num_annotations = 0.0
-        print(all_detections)
+        
         for i in range(len(generator)):
             detections           = all_detections[i][label]
             annotations          = all_annotations[i][label]
