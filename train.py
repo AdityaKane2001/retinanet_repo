@@ -103,8 +103,8 @@ def main(args=None):
     retinanet.training = True
 
     optimizer = optim.Adam(retinanet.parameters(), lr=1e-5)
-
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
+    one_scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=1e-3, steps_per_epoch=len(dataloader_train), epochs=50)
+    lr_cheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
 
     loss_hist = collections.deque(maxlen=500)
     val_loss_hist = collections.deque(maxlen=500)
@@ -144,7 +144,7 @@ def main(args=None):
                 torch.nn.utils.clip_grad_norm_(retinanet.parameters(), 0.1)
 
                 optimizer.step()
-
+                one_scheduler.step()
                 loss_hist.append(float(loss))
 
                 epoch_loss.append(float(loss))
