@@ -372,7 +372,7 @@ class Resizer(object):
         new_image[:rows, :cols, :] = image.astype(np.float32)
 
         annots[:, :4] *= scale
-        print('Scale:',scale)
+        
         return {'img': torch.from_numpy(new_image), 'annot': torch.from_numpy(annots), 'scale': scale, 'image_path':img_path}
 
 
