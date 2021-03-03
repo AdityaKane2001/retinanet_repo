@@ -21,8 +21,8 @@ def get_annots_from_txt(label_file_path):
     file_handler.close()
     
     df = pd.DataFrame(lines)
-    if df.empty():
-        
+    if df.empty:
+        return np.array([],dtype = np.float32),np.array([],dtype = np.float32),np.array([],dtype = np.float32)
     scores = np.array(df[5],dtype = np.float32)
     labels = np.array(df[0],dtype = np.int64)
     x1 = list(df[1])
