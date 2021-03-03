@@ -55,7 +55,7 @@ def main(args=None):
             raise ValueError('Must provide --csv_classes when training on COCO,')
 
         dataset_train = CSVDataset(train_file=parser.csv_train, class_list=parser.csv_classes,
-                                   transform=transforms.Compose([Normalizer(), Augmenter(), Resizer()]))
+                                   transform=transforms.Compose([Normalizer(), Resizer()]))
         val_dataset_train = CSVDataset(train_file=parser.csv_train, class_list=parser.csv_classes,
                                    transform=transforms.Compose([Normalizer(),  Resizer()]))
         if parser.csv_val is None:
@@ -103,7 +103,7 @@ def main(args=None):
     retinanet.training = True
 
     optimizer = optim.Adam(retinanet.parameters(), lr=2e-5)
-    one_scheduler = optim.lr_scheduleroptim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    one_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
     multistep_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[8,15,30], gamma=0.1)
     loss_hist = collections.deque(maxlen=500)
