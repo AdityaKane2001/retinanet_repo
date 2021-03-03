@@ -103,8 +103,8 @@ def main(args=None):
     retinanet.training = True
 
     optimizer = optim.Adam(retinanet.parameters(), lr=5e-5)
-    one_scheduler = torch.optim.lr_scheduleroptim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
-    lr_cheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
+    one_scheduler = optim.lr_scheduleroptim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
 
     loss_hist = collections.deque(maxlen=500)
     val_loss_hist = collections.deque(maxlen=500)
