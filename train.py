@@ -210,8 +210,8 @@ def main(args=None):
             mAP_val = csv_eval.evaluate(dataset_val, retinanet)
             writer.add_scalar('train_mAP_Questions',mAP_train[0][0],epoch_num)
             writer.add_scalar('val_mAP_Questions', mAP_val[0][0], epoch_num)
-            writer.add_scalar('val_loss',val_epoch_loss[-1],epoch_num)
-            writer.add_scalar('train_loss',epoch_loss[-1],epoch_num)
+            writer.add_scalar('val_loss',np.mean(val_epoch_loss),epoch_num)
+            writer.add_scalar('train_loss',np.mean(epoch_loss),epoch_num)
         scheduler.step(np.mean(epoch_loss))
 
         torch.save(retinanet.module, '{}_retinanet_{}.pt'.format(parser.iou, epoch_num))
