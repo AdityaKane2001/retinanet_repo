@@ -56,7 +56,8 @@ def main(args=None):
 
         dataset_train = CSVDataset(train_file=parser.csv_train, class_list=parser.csv_classes,
                                    transform=transforms.Compose([Normalizer(), Augmenter(), Resizer()]))
-
+        val_dataset_train = CSVDataset(train_file=parser.csv_train, class_list=parser.csv_classes,
+                                   transform=transforms.Compose([Normalizer(),  Resizer()]))
         if parser.csv_val is None:
             dataset_val = None
             print('No validation annotations provided.')
@@ -71,7 +72,7 @@ def main(args=None):
     dataloader_train = DataLoader(dataset_train, num_workers=3, collate_fn=collater, batch_sampler=sampler)
 
     if dataset_val is not None:
-        sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=1, drop_last=False)
+        sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=2, drop_last=False)
         dataloader_val = DataLoader(dataset_val, num_workers=3, collate_fn=collater, batch_sampler=sampler_val)
 
     # Create the model
@@ -206,8 +207,8 @@ def main(args=None):
         elif parser.dataset == 'csv' and parser.csv_val is not None:
 
             print('Evaluating dataset')
-            mAP_train = csv_eval.evaluate(dataset_train,retinanet)
-            mAP_val = csv_eval.evaluate(dataset_val, retinanet)
+            mAP_train = csv_eval.evaluate(val_dataset_train,retinanet,iou_threshold=float(parser.iou)/10)
+            mAP_val = csv_eval.evaluate(dataset_val, retinanet,iou_threshold=float(parser.iou)/10)
             writer.add_scalar('train_mAP_Questions',mAP_train[0][0],epoch_num)
             writer.add_scalar('val_mAP_Questions', mAP_val[0][0], epoch_num)
             writer.add_scalar('val_loss',np.mean(val_epoch_loss),epoch_num)
