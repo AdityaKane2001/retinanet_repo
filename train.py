@@ -103,9 +103,9 @@ def main(args=None):
     retinanet.training = True
 
     optimizer = optim.Adam(retinanet.parameters(), lr=2e-5)
-    one_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    #one_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
-    multistep_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[8,12], gamma=0.4)
+    multistep_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[2,5,8,12], gamma=0.4)
     loss_hist = collections.deque(maxlen=500)
     val_loss_hist = collections.deque(maxlen=500)
 
@@ -214,7 +214,7 @@ def main(args=None):
             writer.add_scalar('val_loss',np.mean(val_epoch_loss),epoch_num)
             writer.add_scalar('train_loss',np.mean(epoch_loss),epoch_num)
         lr_scheduler.step(np.mean(epoch_loss))
-        one_scheduler.step()
+        #one_scheduler.step()
         multistep_scheduler.step()
         torch.save(retinanet.module, '{}_retinanet_{}.pt'.format(parser.iou, epoch_num))
 
