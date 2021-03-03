@@ -71,7 +71,7 @@ def main(args=None):
     dataloader_train = DataLoader(dataset_train, num_workers=3, collate_fn=collater, batch_sampler=sampler)
 
     if dataset_val is not None:
-        sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=1, drop_last=False)
+        sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=130, drop_last=False)
         dataloader_val = DataLoader(dataset_val, num_workers=3, collate_fn=collater, batch_sampler=sampler_val)
 
     # Create the model
@@ -106,6 +106,7 @@ def main(args=None):
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
 
     loss_hist = collections.deque(maxlen=500)
+    val_loss_hist = collections.deque(maxlen=500)
 
     retinanet.train()
     retinanet.module.freeze_bn()
@@ -118,6 +119,7 @@ def main(args=None):
         retinanet.module.freeze_bn()
 
         epoch_loss = []
+        val_epoch_loss=[]
 
         for iter_num, data in enumerate(dataloader_train):
             try:
@@ -147,8 +149,46 @@ def main(args=None):
                 epoch_loss.append(float(loss))
 
                 print(
-                    'Epoch: {} | Iteration: {} | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}'.format(
+                    'Train: \n Epoch: {} | Iteration: {} | Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f} \n \n'.format(
                         epoch_num, iter_num, float(classification_loss), float(regression_loss), np.mean(loss_hist)))
+
+                del classification_loss
+                del regression_loss
+            except Exception as e:
+                print(e)
+                continue
+        
+        retinanet.eval()
+        for iter_num, data in enumerate(dataloader_val):
+            try:
+                #optimizer.zero_grad()
+                
+                if torch.cuda.is_available():
+                    classification_loss, regression_loss = retinanet([data['img'].cuda().float(), data['annot']])
+                else:
+                    classification_loss, regression_loss = retinanet([data['img'].float(), data['annot']])
+                    
+                classification_loss = classification_loss.mean()
+                regression_loss = regression_loss.mean()
+
+                loss = classification_loss + regression_loss
+
+                if bool(loss == 0):
+                    continue
+
+                #loss.backward()
+
+                #torch.nn.utils.clip_grad_norm_(retinanet.parameters(), 0.1)
+
+                #optimizer.step()
+
+                val_loss_hist.append(float(loss))
+
+                val_epoch_loss.append(float(loss))
+
+                print(
+                    'Val: \n Epoch: {} |  Classification loss: {:1.5f} | Regression loss: {:1.5f} | Running loss: {:1.5f}  \n \n'.format(
+                        epoch_num,  float(classification_loss), float(regression_loss), np.mean(loss_hist)))
 
                 del classification_loss
                 del regression_loss
@@ -165,10 +205,12 @@ def main(args=None):
         elif parser.dataset == 'csv' and parser.csv_val is not None:
 
             print('Evaluating dataset')
-
-            mAP = csv_eval.evaluate(dataset_val, retinanet)
-            writer.add_scalar('mAP_Questions', mAP[0][0], epoch_num)
-            writer.add_scalar('epoch_loss',epoch_loss[-1],epoch_num)
+            mAP_train = csv_eval.evaluate(dataset_train,retinanet)
+            mAP_val = csv_eval.evaluate(dataset_val, retinanet)
+            writer.add_scalar('train_mAP_Questions',mAP_train[0][0],epoch_num)
+            writer.add_scalar('val_mAP_Questions', mAP_val[0][0], epoch_num)
+            writer.add_scalar('val_loss',val_epoch_loss[-1],epoch_num)
+            writer.add_scalar('train_loss',epoch_loss[-1],epoch_num)
         scheduler.step(np.mean(epoch_loss))
 
         torch.save(retinanet.module, '{}_retinanet_{}.pt'.format(parser.iou, epoch_num))
