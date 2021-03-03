@@ -102,10 +102,13 @@ def main(args=None):
 
     retinanet.training = True
 
-    optimizer = optim.Adam(retinanet.parameters(), lr=2e-5)
+    optimizer = qhoptim.pyt.QHAdam(
+        model.parameters(),
+        lr=3e-4, nus=(0.8, 1.0), betas=(0.99, 0.999))
     #one_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
-    multistep_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5,8,12], gamma=0.5)
+    #multistep_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[8,12], gamma=0.5)
+    #multistep_2 = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5], gamma=0.2)
     loss_hist = collections.deque(maxlen=500)
     val_loss_hist = collections.deque(maxlen=500)
 
