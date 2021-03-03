@@ -11,16 +11,21 @@ from google.colab import data_table
 
 
 def get_annots_from_txt(label_file_path):
-    file_handler = open(label_file_path,'r')
+    try:
+        file_handler = open(label_file_path,'r')
+    except :
+        return np.array([],dtype = np.float32),np.array([],dtype = np.float32),np.array([],dtype = np.float32)
     print(label_file_path)
     lines = file_handler.readlines()
+    read_lines=[]
     for i in lines:
-        i = i.replace('\n','')
-        i = i.split()
-        i = list(map(lambda x:float(x),i))
+        line = i.strip('\n')
+        num_list = line.split(' ')
+        read_lines.append(list(map(lambda x:float(x),num_list)))
     file_handler.close()
-    
-    df = pd.DataFrame(lines)
+    print(read_lines)
+    df = pd.DataFrame(read_lines)
+    print(df)
     if df.empty:
         return np.array([],dtype = np.float32),np.array([],dtype = np.float32),np.array([],dtype = np.float32)
     scores = np.array(df[5],dtype = np.float32)
@@ -37,7 +42,7 @@ def get_annots_from_txt(label_file_path):
     
     return scores, labels, boxes
 
-def _get_detections_from_txt(dataset, labels_dir, score_threshold=0.05, max_detections=100, save_path=None):
+def _get_detections_from_txt(dataset, labels_dir, score_threshold=0.001, max_detections=100, save_path=None):
     
     #dataset_train = CSVDataset(train_file=parser.csv_train, class_list=parser.csv_classes,
     #                           transform=transforms.Compose([Normalizer(), Resizer()]))
@@ -53,6 +58,7 @@ def _get_detections_from_txt(dataset, labels_dir, score_threshold=0.05, max_dete
             scale = data['scale']
             txt_path =os.path.join(labels_dir, data['image_path'].split('/')[-1][:-4]+'.txt') 
             scores,labels,boxes = get_annots_from_txt(txt_path)
+            img = cv2.imread(data['image_path'])
             # run network
             # if torch.cuda.is_available():
             #     scores, labels, boxes = retinanet(data['img'].permute(2, 0, 1).cuda().float().unsqueeze(dim=0))
@@ -63,6 +69,7 @@ def _get_detections_from_txt(dataset, labels_dir, score_threshold=0.05, max_dete
             # boxes  = boxes.cpu().numpy()
             
             # correct boxes for image scale
+            boxes /= 416/640
             boxes /= scale
 
             # select indices which have a score above the threshold
