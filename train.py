@@ -103,7 +103,7 @@ def main(args=None):
     retinanet.training = True
 
     optimizer = QHAdam(
-        model.parameters(),
+        retinanet.parameters(),
         lr=3e-4, nus=(0.8, 1.0), betas=(0.99, 0.999))
     #one_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
