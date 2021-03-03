@@ -68,11 +68,11 @@ def main(args=None):
     else:
         raise ValueError('Dataset type not understood (must be csv or coco), exiting.')
 
-    sampler = AspectRatioBasedSampler(dataset_train, batch_size=2, drop_last=False)
+    sampler = AspectRatioBasedSampler(dataset_train, batch_size=8, drop_last=False)
     dataloader_train = DataLoader(dataset_train, num_workers=3, collate_fn=collater, batch_sampler=sampler)
 
     if dataset_val is not None:
-        sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=2, drop_last=False)
+        sampler_val = AspectRatioBasedSampler(dataset_val, batch_size=8, drop_last=False)
         dataloader_val = DataLoader(dataset_val, num_workers=3, collate_fn=collater, batch_sampler=sampler_val)
 
     # Create the model
@@ -102,9 +102,9 @@ def main(args=None):
 
     retinanet.training = True
 
-    optimizer = optim.Adam(retinanet.parameters(), lr=1e-5)
-
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
+    optimizer = optim.Adam(retinanet.parameters(), lr=5e-5)
+    one_scheduler = torch.optim.lr_scheduleroptim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    lr_cheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
 
     loss_hist = collections.deque(maxlen=500)
     val_loss_hist = collections.deque(maxlen=500)
@@ -144,7 +144,7 @@ def main(args=None):
                 torch.nn.utils.clip_grad_norm_(retinanet.parameters(), 0.1)
 
                 optimizer.step()
-
+                
                 loss_hist.append(float(loss))
 
                 epoch_loss.append(float(loss))
@@ -207,14 +207,14 @@ def main(args=None):
         elif parser.dataset == 'csv' and parser.csv_val is not None:
 
             print('Evaluating dataset')
-            mAP_train = csv_eval.evaluate(val_dataset_train,retinanet,iou_threshold=float(parser.iou)/10)
+            #mAP_train = csv_eval.evaluate(val_dataset_train,retinanet,iou_threshold=float(parser.iou)/10)
             mAP_val = csv_eval.evaluate(dataset_val, retinanet,iou_threshold=float(parser.iou)/10)
-            writer.add_scalar('train_mAP_Questions',mAP_train[0][0],epoch_num)
+            #writer.add_scalar('train_mAP_Questions',mAP_train[0][0],epoch_num)
             writer.add_scalar('val_mAP_Questions', mAP_val[0][0], epoch_num)
             writer.add_scalar('val_loss',np.mean(val_epoch_loss),epoch_num)
             writer.add_scalar('train_loss',np.mean(epoch_loss),epoch_num)
-        scheduler.step(np.mean(epoch_loss))
-
+        lr_scheduler.step(np.mean(epoch_loss))
+        one_scheduler.step()
         torch.save(retinanet.module, '{}_retinanet_{}.pt'.format(parser.iou, epoch_num))
 
     retinanet.eval()
