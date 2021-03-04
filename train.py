@@ -1,6 +1,6 @@
 import argparse
 import collections
-from qhoptim.pyt import QHM, QHAdam
+#from qhoptim.pyt import QHM, QHAdam
 import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
@@ -102,7 +102,7 @@ def main(args=None):
 
     retinanet.training = True
 
-    optimizer = optim.Adam(lr=2e-5)
+    optimizer = optim.Adam(retinanet.params(),lr=2e-5)
     #one_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
     multistep_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5,8,12], gamma=0.2)
