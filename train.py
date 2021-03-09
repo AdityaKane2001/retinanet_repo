@@ -104,7 +104,7 @@ def main(args=None):
 
     optimizer = optim.Adam(retinanet.parameters(), lr=5e-5)
     lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3, verbose=True)
-    multistep_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5,8,12], gamma=0.2)
+    multistep_scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=[5,8,11,20], gamma=0.2)
 
     loss_hist = collections.deque(maxlen=500)
     val_loss_hist = collections.deque(maxlen=500)
