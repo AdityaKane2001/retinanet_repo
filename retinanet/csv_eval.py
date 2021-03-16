@@ -177,7 +177,7 @@ def _get_detections(dataset, retinanet, score_threshold=0.05, max_detections=100
     with torch.no_grad():
         if save_path!=None:
             save_dict=dict()
-            
+            save_dict['image_name'] = []
             save_dict['x1'] = []
             save_dict['x2'] = []
             save_dict['y1'] = []
@@ -199,14 +199,7 @@ def _get_detections(dataset, retinanet, score_threshold=0.05, max_detections=100
             # correct boxes for image scale
             boxes /= scale
 
-            if save_path!=None:
-                for i in range(len(boxes)):
-                    save_dict['imagename']=data['image_path']
-                    save_dict['x1'].append(boxes[i,0])
-                    save_dict['x2'].append(boxes[i,1])
-                    save_dict['y1'].append(boxes[i,2])
-                    save_dict['y2'].append(boxes[i,3])
-
+            
 
             # select indices which have a score above the threshold
             indices = np.where(scores > score_threshold)[0]
@@ -219,6 +212,14 @@ def _get_detections(dataset, retinanet, score_threshold=0.05, max_detections=100
 
                 # select detections
                 image_boxes      = boxes[indices[scores_sort], :]
+                if save_path!=None:
+                    for i in range(len(image_boxes)):
+                        save_dict['image_name'].append(data['image_path'])
+                        save_dict['x1'].append(image_boxes[i,0])
+                        save_dict['x2'].append(image_boxes[i,1])
+                        save_dict['y1'].append(image_boxes[i,2])
+                        save_dict['y2'].append(image_boxes[i,3])
+
                 image_scores     = scores[scores_sort]
                 image_labels     = labels[indices[scores_sort]]
                 image_detections = np.concatenate([image_boxes, np.expand_dims(image_scores, axis=1), np.expand_dims(image_labels, axis=1)], axis=1)
