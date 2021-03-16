@@ -175,6 +175,13 @@ def _get_detections(dataset, retinanet, score_threshold=0.05, max_detections=100
     retinanet.eval()
     
     with torch.no_grad():
+        if save_path!=None:
+            save_dict=dict()
+            
+            save_dict['x1'] = []
+            save_dict['x2'] = []
+            save_dict['y1'] = []
+            save_dict['y2'] = []
 
         for index in range(len(dataset)):
             data = dataset[index]
@@ -191,6 +198,15 @@ def _get_detections(dataset, retinanet, score_threshold=0.05, max_detections=100
 
             # correct boxes for image scale
             boxes /= scale
+
+            if save_path!=None:
+                for i in range(len(boxes)):
+                    save_dict['imagename']=data['image_path']
+                    save_dict['x1'].append(boxes[i,0])
+                    save_dict['x2'].append(boxes[i,1])
+                    save_dict['y1'].append(boxes[i,2])
+                    save_dict['y2'].append(boxes[i,3])
+
 
             # select indices which have a score above the threshold
             indices = np.where(scores > score_threshold)[0]
@@ -216,7 +232,9 @@ def _get_detections(dataset, retinanet, score_threshold=0.05, max_detections=100
                     all_detections[index][label] = np.zeros((0, 5))
 
             print('{}/{}'.format(index + 1, len(dataset)), end='\r')
-
+    if save_path!=None:
+        df = pd.DataFrame(save_dict)
+        df.to_csv(save_path)
     return all_detections
 
 
@@ -251,6 +269,7 @@ def evaluate(
     score_threshold=0.05,
     max_detections=100,
     save_path=None,
+    df_save_path=None,
     labels_dir=None, #provide if mode='yolo'
     mode = 'retina'
 ):
@@ -270,7 +289,7 @@ def evaluate(
 
     # gather all detections and annotations
     if mode=='retina':
-        all_detections     = _get_detections(generator, retinanet, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
+        all_detections     = _get_detections(generator, retinanet, score_threshold=score_threshold, max_detections=max_detections, save_path=df_save_path)
     else:
         all_detections = _get_detections_from_txt(generator, labels_dir, score_threshold=score_threshold, max_detections=max_detections, save_path=save_path)
     all_annotations    = _get_annotations(generator)

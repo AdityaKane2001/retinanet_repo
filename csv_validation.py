@@ -21,6 +21,7 @@ def main(args=None):
     parser.add_argument('--class_list_path',help='Path to classlist csv',type=str)
     parser.add_argument('--iou_threshold',help='IOU threshold used for evaluation',type=str, default='0.5')
     parser.add_argument('--PR_save_path',help='Path to store PR curve image',default=None)
+    parser.add_argument('--df_save_path')
     parser.add_argument('--yolo_labels_dir',default='',type=str,help='Path to labels_dir folder for YOLO detections')
     parser = parser.parse_args(args)
 
@@ -48,7 +49,7 @@ def main(args=None):
         retinanet.eval()
         retinanet.module.freeze_bn()
 
-        print(csv_eval.evaluate(dataset_val,retinanet = retinanet,iou_threshold=float(parser.iou_threshold),save_path=parser.PR_save_path))
+        print(csv_eval.evaluate(dataset_val,df_save_path=parser.df_save_path,retinanet = retinanet,iou_threshold=float(parser.iou_threshold),save_path=parser.PR_save_path))
     else:
         print(csv_eval.evaluate(dataset_val,mode='yolo', labels_dir = parser.yolo_labels_dir,iou_threshold=float(parser.iou_threshold),save_path=parser.PR_save_path))
 
